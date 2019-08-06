@@ -1,4 +1,4 @@
-FROM agrdocker/agr_java_env
+FROM agrdocker/agr_base_linux_env
 
 WORKDIR /workdir
 
