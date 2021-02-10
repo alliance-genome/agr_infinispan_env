@@ -1,11 +1,24 @@
-build: pull
-	docker build -t agrdocker/agr_infinispan_env .
+REG := 100225593120.dkr.ecr.us-east-1.amazonaws.com
+TAG := latest
 
-push: build
-	docker push agrdocker/agr_infinispan_env
+registry-docker-login:
+ifneq ($(shell echo ${REG} | egrep "ecr\..+\.amazonaws\.com"),)
+	@$(eval DOCKER_LOGIN_CMD=aws)
+ifneq (${AWS_PROFILE},)
+	@$(eval DOCKER_LOGIN_CMD=${DOCKER_LOGIN_CMD} --profile ${AWS_PROFILE})
+endif
+	@$(eval DOCKER_LOGIN_CMD=${DOCKER_LOGIN_CMD} ecr get-login-password | docker login -u AWS --password-stdin https://${REG})
+	${DOCKER_LOGIN_CMD}
+endif
 
-pull:
-	docker pull agrdocker/agr_base_linux_env
+build: pull-base
+	docker build -t ${REG}/agr_infinispan_env --build-arg REG=${REG} .
+
+push: build registry-docker-login
+	docker push ${REG}/agr_infinispan_env
+
+pull-base: registry-docker-login
+	docker pull ${REG}/agr_base_linux_env:${TAG}
 
 bash:
-	docker run -t -i agrdocker/agr_infinispan_env bash
+	docker run -t -i ${REG}/agr_infinispan_env bash
